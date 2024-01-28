@@ -15,10 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#>
 
+<#
     .SYNOPSIS
         This script is used to build the Vincent OS Kernel manually.
-    
+        
     .DESCRIPTION
         The script build the Vincent OS Kernel manually for distributions that
         are not based on Arch Linux or if, and only if, you really have
