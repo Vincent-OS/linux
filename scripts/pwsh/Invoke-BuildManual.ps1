@@ -16,11 +16,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #>
-
 <#
     .SYNOPSIS
         This script is used to build the Vincent OS Kernel manually.
-        
+
     .DESCRIPTION
         The script build the Vincent OS Kernel manually for distributions that
         are not based on Arch Linux or if, and only if, you really have
@@ -63,16 +62,26 @@ if ($Help) {
     return
 }
 elseif ($NoRust) {
-    BuildManualNoRust
+    BuildManualNoRust("-NoRust")
 }
 elseif ($CheckTools) {
-    CheckTools
+    CheckTools("-CheckTools")
 }
 else {
-    BuildManual
+    Invoke-BuildManual
 }
 
-function BuildManual {
+function Invoke-BuildManual {
+    # TODO: This is poorly implemented.
+    Set-Location ../ # Go to the kernel source directory
+
+    # Save the .config file and clean old builds
+    Write-Host "Saving the .config file..."
+    make LLVM=1 olddefconfig | Wait-Process "make"
+
+    Write-Host "Cleaning old builds..."
+    make LLVM=1 clean | Wait-Process "make"
+
     # Build the kernel
     Write-Host "Building the kernel..."
     make LLVM=1 -j$procCount | Wait-Process "make"
@@ -94,7 +103,10 @@ function BuildManual {
     }
 }
 
-function BuildManualNoRust {
+function BuildManualNoRust($NoRust) {
+    # TODO: This is poorly implemented.
+    Set-Location ../ # Go to the kernel source directory
+
     # Build the kernel
     Write-Host "Building the kernel..."
     make -j$procCount | Wait-Process "make"
@@ -116,7 +128,7 @@ function BuildManualNoRust {
     }
 }
 
-function CheckTools {
+function CheckTools($CheckTools) {
     $tools = @("make", "gcc", "base-devel", "xmlto", "kmod", "inetutils", "bc", "libelf", "git", "cpio", "perl", "tar", "xz", "llvm")
     $tools | ForEach-Object {
         if (Get-Command $_ -ErrorAction SilentlyContinue) {
