@@ -37,7 +37,7 @@
     .NOTES
         I know some of you gonna hate me for doing this but I feel funny to
         add PowerShell script to Vincent OS (and because I deliver PowerShell
-        package in the installation (of course, it's optional)).
+        package in the installation).
 #>
 
 [cmdletbinding()]
@@ -51,84 +51,52 @@ param (
 )
 
 # Collect the numbers of CPU threads in linux
-$procCount = nproc --all
+$procCount = (Get-Content /proc/cpuinfo | Select-String -Pattern "processor" | Measure-Object).Count
+if ($procCount -lt 1) {
+    $procCount = 2
+}
 Write-Host "Number of CPU threads: $procCount"
 
 if ($Help) {
-    Write-Host "Invoke-BuildManual.ps1 [options]"
-    Write-Host "    -Help: Show the help message."
-    Write-Host "    -NoRust: Do not build the Rust part. Only for debugging purposes."
-    Write-Host "    -CheckTools: Check if all tools are installed."
+    Write-Host @"
+Invoke-BuildManual.ps1 [options]
+    -Help: Show the help message.
+    -NoRust: Do not build the Rust part. Only for debugging purposes.
+    -CheckTools: Check if all tools are installed.
+"@
     return
 }
 elseif ($NoRust) {
-    BuildManualNoRust("-NoRust")
-}
-elseif ($CheckTools) {
-    CheckTools("-CheckTools")
-}
-else {
-    Invoke-BuildManual
-}
-
-function Invoke-BuildManual {
-    # TODO: This is poorly implemented.
-    Set-Location ../ # Go to the kernel source directory
+    Set-Location ../../ # Go to the kernel source directory
 
     # Save the .config file and clean old builds
     Write-Host "Saving the .config file..."
-    make LLVM=1 olddefconfig | Wait-Process "make"
+    make olddefconfig
 
     Write-Host "Cleaning old builds..."
-    make LLVM=1 clean | Wait-Process "make"
+    make clean
 
     # Build the kernel
     Write-Host "Building the kernel..."
-    make LLVM=1 -j$procCount | Wait-Process "make"
-    $installProcess = Read-Host "Kernel is now builded! Do you want to install it? [Y/n]"
+    make -j $procCount
+    $installProcess = Read-Host "Kernel is now built! Do you want to install it? [Y/n]"
     if ($installProcess -eq "Y") {
         Write-Host "Installing the kernel modules..."
-        make LLVM=1 modules_install | Wait-Process "make"
+        make modules_install
         
         Write-Host "Installing the kernel..."
-        make LLVM=1 install | Wait-Process "make"
+        make install
         return 0
     }
     elseif ($installProcess -eq "n") {
         Write-Host "Kernel will not be installed. Exiting..."
         return 0
     }
-    else { # If else statement are badly implemented in this situation
+    else {
         $installProcess
     }
 }
-
-function BuildManualNoRust($NoRust) {
-    # TODO: This is poorly implemented.
-    Set-Location ../ # Go to the kernel source directory
-
-    # Build the kernel
-    Write-Host "Building the kernel..."
-    make -j$procCount | Wait-Process "make"
-    $installProcess = Read-Host "Kernel is now builded! Do you want to install it? [Y/n]"
-    if ($installProcess -eq "Y") {
-        Write-Host "Installing the kernel modules..."
-        make modules_install | Wait-Process "make"
-        
-        Write-Host "Installing the kernel..."
-        make install | Wait-Process "make"
-        return 0
-    }
-    elseif ($installProcess -eq "n") {
-        Write-Host "Kernel will not be installed. Exiting..."
-        return 0
-    }
-    else { # If else statement are badly implemented in this situation
-        $installProcess
-    }
-}
-
-function CheckTools($CheckTools) {
+elseif ($CheckTools) {
     $tools = @("make", "gcc", "base-devel", "xmlto", "kmod", "inetutils", "bc", "libelf", "git", "cpio", "perl", "tar", "xz", "llvm")
     $tools | ForEach-Object {
         if (Get-Command $_ -ErrorAction SilentlyContinue) {
@@ -138,5 +106,35 @@ function CheckTools($CheckTools) {
             Write-Error "Tool $_ is not installed."
             return 1
         }
+    }
+}
+else {
+    Set-Location ../../ # Go to the kernel source directory
+
+    # Save the .config file and clean old builds
+    Write-Host "Saving the .config file..."
+    make LLVM=1 olddefconfig
+
+    Write-Host "Cleaning old builds..."
+    make LLVM=1 clean
+
+    # Build the kernel
+    Write-Host "Building the kernel..."
+    make LLVM=1 -j $procCount
+    $installProcess = Read-Host "Kernel is now built! Do you want to install it? [Y/n]"
+    if ($installProcess -eq "Y") {
+        Write-Host "Installing the kernel modules..."
+        make LLVM=1 modules_install
+        
+        Write-Host "Installing the kernel..."
+        make LLVM=1 install
+        return 0
+    }
+    elseif ($installProcess -eq "n") {
+        Write-Host "Kernel will not be installed. Exiting..."
+        return 0
+    }
+    else {
+        $installProcess
     }
 }
