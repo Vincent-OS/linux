@@ -97,14 +97,20 @@ elseif ($NoRust) {
     }
 }
 elseif ($CheckTools) {
-    $tools = @("make", "gcc", "base-devel", "xmlto", "kmod", "inetutils", "bc", "libelf", "git", "cpio", "perl", "tar", "xz", "llvm")
+    Write-Warning "If you see that some tools are not installed,"
+    Write-Warning "please double check using your package manager."
+    Write-Warning "Before performing a build."
+    $tools = @("make", "gcc", "base-devel", "xmlto", "kmod", "inetutils", "bc", "libelf", "git", "cpio", "perl", "tar", "xz", "llvm", "rustup")
     $tools | ForEach-Object {
-        if (Get-Command $_ -ErrorAction SilentlyContinue) {
+        $toolCheck = if (Get-Command $_ -ErrorAction SilentlyContinue) {
             Write-Host "Tool $_ is installed."
         } 
         else {
             Write-Error "Tool $_ is not installed."
             return 1
+        }
+        if ($toolCheck -eq 1) {
+            Write-Error "Tool $_ is not installed."
         }
     }
 }
