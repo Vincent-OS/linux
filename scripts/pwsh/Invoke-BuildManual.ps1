@@ -108,7 +108,7 @@ elseif ($CheckTools) {
         else {
             Write-Error "Tool $_ is not installed."
             return 1
-        }
+        }t
         if ($toolCheck -eq 1) {
             Write-Error "Tool $_ is not installed."
         }
