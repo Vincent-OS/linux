@@ -67,33 +67,41 @@ Invoke-BuildManual.ps1 [options]
     return
 }
 elseif ($NoRust) {
-    Set-Location ../../ # Go to the kernel source directory
+    try {
+        Set-Location ../../ # Go to the kernel source directory
 
-    # Save the .config file and clean old builds
-    Write-Host "Saving the .config file..."
-    make olddefconfig
+        # Save the .config file and clean old builds
+        Write-Host "Saving the .config file..."
+        make olddefconfig
 
-    Write-Host "Cleaning old builds..."
-    make clean
+        Write-Host "Cleaning old builds..."
+        make clean
 
-    # Build the kernel
-    Write-Host "Building the kernel..."
-    make -j $procCount
-    $installProcess = Read-Host "Kernel is now built! Do you want to install it? [Y/n]"
-    if ($installProcess -eq "Y") {
-        Write-Host "Installing the kernel modules..."
-        make modules_install
-        
-        Write-Host "Installing the kernel..."
-        make install
-        return 0
+        # Build the kernel
+        Write-Host "Building the kernel..."
+        make -j $procCount
+        $installProcess = Read-Host "Kernel is now built! Do you want to install it? [Y/n]"
+        if ($installProcess -eq "Y") {
+            Write-Host "Installing the kernel modules..."
+            make modules_install
+            
+            Write-Host "Installing the kernel..."
+            make install
+            return 0
+        }
+        elseif ($installProcess -eq "n") {
+            Write-Host "Kernel will not be installed. Exiting..."
+            return 0
+        }
+        else {
+            $installProcess
+        }
     }
-    elseif ($installProcess -eq "n") {
-        Write-Host "Kernel will not be installed. Exiting..."
-        return 0
-    }
-    else {
-        $installProcess
+    catch {
+        $errorMessage = $_.Exception.Message
+        Write-Error "An error occurred during the build process: $errorMessage"
+        $errorMessage | Out-File -FilePath "/var/log/KERNEL_Build_error.log" -Append
+        return 2
     }
 }
 elseif ($CheckTools) {
@@ -115,32 +123,40 @@ elseif ($CheckTools) {
     }
 }
 else {
-    Set-Location ../../ # Go to the kernel source directory
+    try {
+        Set-Location ../../ # Go to the kernel source directory
 
-    # Save the .config file and clean old builds
-    Write-Host "Saving the .config file..."
-    make LLVM=1 olddefconfig
+        # Save the .config file and clean old builds
+        Write-Host "Saving the .config file..."
+        make LLVM=1 olddefconfig
 
-    Write-Host "Cleaning old builds..."
-    make LLVM=1 clean
+        Write-Host "Cleaning old builds..."
+        make LLVM=1 clean
 
-    # Build the kernel
-    Write-Host "Building the kernel..."
-    make LLVM=1 -j $procCount
-    $installProcess = Read-Host "Kernel is now built! Do you want to install it? [Y/n]"
-    if ($installProcess -eq "Y") {
-        Write-Host "Installing the kernel modules..."
-        make LLVM=1 modules_install
-        
-        Write-Host "Installing the kernel..."
-        make LLVM=1 install
-        return 0
+        # Build the kernel
+        Write-Host "Building the kernel..."
+        make LLVM=1 -j $procCount
+        $installProcess = Read-Host "Kernel is now built! Do you want to install it? [Y/n]"
+        if ($installProcess -eq "Y") {
+            Write-Host "Installing the kernel modules..."
+            make LLVM=1 modules_install
+            
+            Write-Host "Installing the kernel..."
+            make LLVM=1 install
+            return 0
+        }
+        elseif ($installProcess -eq "n") {
+            Write-Host "Kernel will not be installed. Exiting..."
+            return 0
+        }
+        else {
+            $installProcess
+        }
     }
-    elseif ($installProcess -eq "n") {
-        Write-Host "Kernel will not be installed. Exiting..."
-        return 0
-    }
-    else {
-        $installProcess
+    catch {
+        $errorMessage = $_.Exception.Message
+        Write-Error "An error occurred during the build process: $errorMessage"
+        $errorMessage | Out-File -FilePath "/var/log/KERNEL_Build_error.log" -Append
+        return 2
     }
 }
