@@ -68,4 +68,9 @@ config LOGO_SUPERH_CLUT224
 	depends on SUPERH
 	default y
 
+config LOGO_LARRY_CLUT224
+	bool "Gentoo-ised 224-colour logo"
+	depends on LOGO
+	default y
+
 endif # LOGO
