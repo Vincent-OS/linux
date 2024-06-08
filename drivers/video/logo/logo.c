@@ -41,7 +41,6 @@ late_initcall_sync(fb_logo_late_init);
  * modpost that it is intended that this function uses data
  * marked __initdata.
  */
-extern const struct linux_logo logo_larry_clut224;
 const struct linux_logo * __ref fb_find_logo(int depth)
 {
 	const struct linux_logo *logo = NULL;
@@ -100,10 +99,6 @@ const struct linux_logo * __ref fb_find_logo(int depth)
 #ifdef CONFIG_LOGO_SUPERH_CLUT224
 		/* SuperH Linux logo */
 		logo = &logo_superh_clut224;
-#endif
-#ifdef CONFIG_LOGO_LARRY_CLUT224
-		/* Gentoo-ised logo */
-		logo = &logo_larry_clut224;
 #endif
 	}
 	return logo;
