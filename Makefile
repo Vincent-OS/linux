@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 6
-PATCHLEVEL = 10
-SUBLEVEL = 0
-EXTRAVERSION = -rc6
-NAME = Baby Opossum Posse
+PATCHLEVEL = 9
+SUBLEVEL = 8
+EXTRAVERSION = -origin
+NAME = Vincent OS
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
