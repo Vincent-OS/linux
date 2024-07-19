@@ -194,6 +194,12 @@ static struct bch_inode_info *bch2_inode_insert(struct bch_fs *c, struct bch_ino
 		 * discard_new_inode() expects it to be set...
 		 */
 		inode->v.i_flags |= I_NEW;
+		/*
+		 * We don't want bch2_evict_inode() to delete the inode on disk,
+		 * we just raced and had another inode in cache. Normally new
+		 * inodes don't have nlink == 0 - except tmpfiles do...
+		 */
+		set_nlink(&inode->v, 1);
 		discard_new_inode(&inode->v);
 		inode = old;
 	} else {
@@ -238,7 +244,6 @@ static struct bch_inode_info *__bch2_new_inode(struct bch_fs *c)
 	inode->ei_flags = 0;
 	mutex_init(&inode->ei_quota_lock);
 	memset(&inode->ei_devs_need_flush, 0, sizeof(inode->ei_devs_need_flush));
-	inode->v.i_state = 0;
 
 	if (unlikely(inode_init_always(c->vfs_sb, &inode->v))) {
 		kmem_cache_free(bch2_inode_cache, inode);
@@ -2026,6 +2031,8 @@ err_put_super:
 	__bch2_fs_stop(c);
 	deactivate_locked_super(sb);
 err:
+	if (ret)
+		pr_err("error: %s", bch2_err_str(ret));
 	/*
 	 * On an inconsistency error in recovery we might see an -EROFS derived
 	 * errorcode (from the journal), but we don't want to return that to
