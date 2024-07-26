@@ -78,10 +78,10 @@ static int cmma_test_essa(void)
 		  [reg2] "=&a" (reg2),
 		  [rc] "+&d" (rc),
 		  [tmp] "=&d" (tmp),
-		  "+Q" (S390_lowcore.program_new_psw),
+		  "+Q" (get_lowcore()->program_new_psw),
 		  "=Q" (old)
 		: [psw_old] "a" (&old),
-		  [psw_pgm] "a" (&S390_lowcore.program_new_psw),
+		  [psw_pgm] "a" (&get_lowcore()->program_new_psw),
 		  [cmd] "i" (ESSA_GET_STATE)
 		: "cc", "memory");
 	return rc;
@@ -101,10 +101,10 @@ static void cmma_init(void)
 
 static void setup_lpp(void)
 {
-	S390_lowcore.current_pid = 0;
-	S390_lowcore.lpp = LPP_MAGIC;
+	get_lowcore()->current_pid = 0;
+	get_lowcore()->lpp = LPP_MAGIC;
 	if (test_facility(40))
-		lpp(&S390_lowcore.lpp);
+		lpp(&get_lowcore()->lpp);
 }
 
 #ifdef CONFIG_KERNEL_UNCOMPRESSED
@@ -304,11 +304,18 @@ static unsigned long setup_kernel_memory_layout(unsigned long kernel_size)
 	MODULES_END = round_down(kernel_start, _SEGMENT_SIZE);
 	MODULES_VADDR = MODULES_END - MODULES_LEN;
 	VMALLOC_END = MODULES_VADDR;
+	if (IS_ENABLED(CONFIG_KMSAN))
+		VMALLOC_END -= MODULES_LEN * 2;
 
 	/* allow vmalloc area to occupy up to about 1/2 of the rest virtual space left */
 	vsize = (VMALLOC_END - FIXMAP_SIZE) / 2;
 	vsize = round_down(vsize, _SEGMENT_SIZE);
 	vmalloc_size = min(vmalloc_size, vsize);
+	if (IS_ENABLED(CONFIG_KMSAN)) {
+		/* take 2/3 of vmalloc area for KMSAN shadow and origins */
+		vmalloc_size = round_down(vmalloc_size / 3, _SEGMENT_SIZE);
+		VMALLOC_END -= vmalloc_size * 2;
+	}
 	VMALLOC_START = VMALLOC_END - vmalloc_size;
 
 	__memcpy_real_area = round_down(VMALLOC_START - MEMCPY_REAL_SIZE, PAGE_SIZE);
@@ -501,7 +508,7 @@ void startup_kernel(void)
 	 * Save KASLR offset for early dumps, before vmcore_info is set.
 	 * Mark as uneven to distinguish from real vmcore_info pointer.
 	 */
-	S390_lowcore.vmcore_info = __kaslr_offset_phys ? __kaslr_offset_phys | 0x1UL : 0;
+	get_lowcore()->vmcore_info = __kaslr_offset_phys ? __kaslr_offset_phys | 0x1UL : 0;
 
 	/*
 	 * Jump to the decompressed kernel entry point and switch DAT mode on.
