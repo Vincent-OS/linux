@@ -96,11 +96,16 @@ EXPORT_SYMBOL(dotdot_name);
  *
  * This hash-function tries to avoid losing too many bits of hash
  * information, yet avoid using a prime hash-size or similar.
+ *
+ * Marking the variables "used" ensures that the compiler doesn't
+ * optimize them away completely on architectures with runtime
+ * constant infrastructure, this allows debuggers to see their
+ * values. But updating these values has no effect on those arches.
  */
 
-static unsigned int d_hash_shift __ro_after_init;
+static unsigned int d_hash_shift __ro_after_init __used;
 
-static struct hlist_bl_head *dentry_hashtable __ro_after_init;
+static struct hlist_bl_head *dentry_hashtable __ro_after_init __used;
 
 static inline struct hlist_bl_head *d_hash(unsigned long hashlen)
 {
@@ -1378,19 +1383,8 @@ int d_set_mounted(struct dentry *dentry)
 	struct dentry *p;
 	int ret = -ENOENT;
 	write_seqlock(&rename_lock);
-	for (p = dentry->d_parent; !IS_ROOT(p); p = p->d_parent) {
-		/* Need exclusion wrt. d_invalidate() */
-		spin_lock(&p->d_lock);
-		if (unlikely(d_unhashed(p))) {
-			spin_unlock(&p->d_lock);
-			goto out;
-		}
-		spin_unlock(&p->d_lock);
-	}
-	spin_lock(&dentry->d_lock);
-	if (!d_unlinked(dentry)) {
-		ret = -EBUSY;
-		if (!d_mountpoint(dentry)) {
+	for (p = dentry->d_parent; 
+		spin_unld_mountpoint(dentry)) {
 			dentry->d_flags |= DCACHE_MOUNTED;
 			ret = 0;
 		}
@@ -3227,3 +3221,4 @@ void __init vfs_caches_init(void)
 	bdev_cache_init();
 	chrdev_init();
 }
+                                                                                                                                                                                                                                                                                     
