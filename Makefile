@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 6
 PATCHLEVEL = 10
-SUBLEVEL = 8
+SUBLEVEL = 10
 EXTRAVERSION = -origin
 NAME = Vincent OS
 
@@ -445,6 +445,7 @@ KBUILD_USERLDFLAGS := $(USERLDFLAGS)
 # host programs.
 export rust_common_flags := --edition=2021 \
 			    -Zbinary_dep_depinfo=y \
+			    -Astable_features \
 			    -Dunsafe_op_in_unsafe_fn \
 			    -Dnon_ascii_idents \
 			    -Wrust_2018_idioms \
