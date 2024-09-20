@@ -2,8 +2,8 @@
 VERSION = 6
 PATCHLEVEL = 11
 SUBLEVEL = 0
-EXTRAVERSION =
-NAME = Baby Opossum Posse
+EXTRAVERSION = -origin
+NAME = Vincent OS
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
