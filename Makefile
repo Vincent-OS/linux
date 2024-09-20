@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 6
-PATCHLEVEL = 10
-SUBLEVEL = 10
+PATCHLEVEL = 11
+SUBLEVEL = 0
 EXTRAVERSION = -origin
 NAME = Vincent OS
 
